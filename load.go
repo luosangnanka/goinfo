@@ -1,14 +1,4 @@
-/*===========================================
-*   Copyright (C) 2013 All rights reserved.
-*
-*   company      : xiaomi
-*   author       : zhangye
-*   email        : zhangye@xiaomi.com
-*   date         : 2013-12-12 17:00:25
-*   description  : package xminfo - loadavg info
-*
-=============================================*/
-package xminfo
+package goinfo
 
 import (
 	"fmt"

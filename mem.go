@@ -1,14 +1,4 @@
-/*===========================================
-*   Copyright (C) 2013 All rights reserved.
-*
-*   company      : xiaomi
-*   author       : zhangye
-*   email        : zhangye@xiaomi.com
-*   date         : 2013-12-12 14:52:25
-*   description  : package xminfo - mem info
-*
-=============================================*/
-package xminfo
+package goinfo
 
 import (
 	"fmt"
