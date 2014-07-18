@@ -6,25 +6,28 @@ import (
 	"strings"
 )
 
+// Tcp is tcp info struct.
 type Tcp struct {
-	ActiveOpens  string
-	PassiveOpens string
-	InSegs       string
-	OutSegs      string
-	RetransSegs  string
+	ActiveOpens  int64
+	PassiveOpens int64
+	InSegs       int64
+	OutSegs      int64
+	RetransSegs  int64
 }
 
+// String format the tcp struct.
 func (t *Tcp) String() (tcp string) {
 	if t == nil {
 		return
 	}
-	return fmt.Sprintf("ActiveOpens:%s, PassiveOpens:%s, InSegs:%s, OutSegs:%s, RetransSegs:%s", t.ActiveOpens, t.PassiveOpens, t.InSegs, t.OutSegs, t.RetransSegs)
+
+	return fmt.Sprintf("ActiveOpens:%d, PassiveOpens:%d, InSegs:%d, OutSegs:%d, RetransSegs:%d", t.ActiveOpens, t.PassiveOpens, t.InSegs, t.OutSegs, t.RetransSegs)
 }
 
-// 通过读取 /proc/net/snmp 获取tcp信息
-func (xm *Xminfo) Tcp() (tcp *Tcp, err error) {
-	var i int = 0
-	b, err := ioutil.ReadFile(gSnmp)
+// TCP getting tcp info by reading linux /proc/net/snmp file.
+func (x *Xminfo) TCP() (tcp *Tcp, err error) {
+	var i = 0
+	b, err := ioutil.ReadFile(gSnmpFile)
 	if err != nil {
 		return
 	}
@@ -38,9 +41,13 @@ func (xm *Xminfo) Tcp() (tcp *Tcp, err error) {
 				t := strings.Replace(v, "Tcp:", "", -1)
 				t = strings.TrimSpace(t)
 				tS := strings.Fields(t)
-				tcp = &Tcp{ActiveOpens: tS[4], PassiveOpens: tS[5], InSegs: tS[9], OutSegs: tS[10], RetransSegs: tS[11]}
+				if len(tS) < 11 {
+					err = fmt.Errorf("tcp info fields has no enough fields")
+					return
+				}
+
+				tcp = &Tcp{ActiveOpens: string2Int64(tS[4]), PassiveOpens: string2Int64(tS[5]), InSegs: string2Int64(tS[9]), OutSegs: string2Int64(tS[10]), RetransSegs: string2Int64(tS[11])}
 			}
-			i++
 		}
 	}
 

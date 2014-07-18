@@ -6,24 +6,27 @@ import (
 	"strings"
 )
 
+// Udp is udp info struct.
 type Udp struct {
-	InDatagrams  string
-	NoPorts      string
-	InErrors     string
-	OutDatagrams string
+	InDatagrams  int64
+	NoPorts      int64
+	InErrors     int64
+	OutDatagrams int64
 }
 
+// String format the udp struct.
 func (u *Udp) String() (udp string) {
 	if u == nil {
 		return
 	}
-	return fmt.Sprintf("InDatagrams:%s, NoPorts:%s, InErrors:%s, OutDatagrams:%s", u.InDatagrams, u.NoPorts, u.InErrors, u.OutDatagrams)
+
+	return fmt.Sprintf("InDatagrams:%d, NoPorts:%d, InErrors:%d, OutDatagrams:%d", u.InDatagrams, u.NoPorts, u.InErrors, u.OutDatagrams)
 }
 
-// 通过读取 /proc/net/snmp 获取udp信息
-func (xm *Xminfo) Udp() (udp *Udp, err error) {
-	var i int = 0
-	b, err := ioutil.ReadFile(gSnmp)
+// UDP getting udp info by reading linux /proc/net/snmp file.
+func (x *Xminfo) UDP() (udp *Udp, err error) {
+	var i = 0
+	b, err := ioutil.ReadFile(gSnmpFile)
 	if err != nil {
 		return
 	}
@@ -37,7 +40,11 @@ func (xm *Xminfo) Udp() (udp *Udp, err error) {
 				u := strings.Replace(v, "Udp:", "", -1)
 				u = strings.TrimSpace(u)
 				uS := strings.Fields(u)
-				udp = &Udp{InDatagrams: uS[0], NoPorts: uS[1], InErrors: uS[2], OutDatagrams: uS[3]}
+				if len(uS) < 4 {
+					err = fmt.Errorf("udp info fields has no enough fields")
+					return
+				}
+				udp = &Udp{InDatagrams: string2Int64(uS[0]), NoPorts: string2Int64(uS[1]), InErrors: string2Int64(uS[2]), OutDatagrams: string2Int64(uS[3])}
 			}
 			i++
 		}

@@ -6,28 +6,31 @@ import (
 	"strings"
 )
 
-type Cpu struct {
-	Total  int64
-	User   int64
-	Nice   int64
-	System int64
-	Idle   int64
-	Iowait int64
-	Irq    int64
-	Sftirq int64
+// CPUInfo cpu info struct.
+type CPUInfo struct {
+	Total   int64 `json:"total"`
+	User    int64 `json:"user"`
+	Nice    int64 `json:"nice"`
+	System  int64 `json:"system"`
+	Idle    int64 `json:"idle"`
+	Iowait  int64 `json:"iowait"`
+	Irq     int64 `json:"irq"`
+	Softirq int64 `json:"softirq"`
 }
 
-func (c *Cpu) String() (cpu string) {
+// String format the cpu struct.
+func (c *CPUInfo) String() (cpu string) {
 	if c == nil {
 		return
 	}
-	return fmt.Sprintf("total\tuser\tnice\tsystem\tidle\tiowait\tirq\tsoftirq\n%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t", c.Total, c.User, c.Nice, c.System, c.Idle, c.Iowait, c.Irq, c.Sftirq)
+
+	return fmt.Sprintf("total\tuser\tnice\tsystem\tidle\tiowait\tirq\tsoftirq\n%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t", c.Total, c.User, c.Nice, c.System, c.Idle, c.Iowait, c.Irq, c.Softirq)
 }
 
-// 通过读取 /proc/stat 获取cpu状态
-func (xm *Xminfo) Cpu() (cpu []*Cpu, err error) {
-	cpu = make([]*Cpu, 0)
-	b, err := ioutil.ReadFile(gCpu)
+// CPU getting cpu info by reading linux /proc/stat file.
+func (x *Xminfo) CPU() (info []*CPUInfo, err error) {
+	info = make([]*CPUInfo, 0)
+	b, err := ioutil.ReadFile(gCPUFile)
 	if err != nil {
 		return
 	}
@@ -38,16 +41,20 @@ func (xm *Xminfo) Cpu() (cpu []*Cpu, err error) {
 			continue
 		}
 		if strings.HasPrefix(cc[0], "cpu") {
-			user := string2int64(cc[1])
-			nice := string2int64(cc[2])
-			system := string2int64(cc[3])
-			idle := string2int64(cc[4])
-			iowait := string2int64(cc[5])
-			irq := string2int64(cc[6])
-			softirq := string2int64(cc[7])
+			if len(cc) < 8 {
+				err = fmt.Errorf("cpu info fields has no enough fields")
+				return
+			}
+			user := string2Int64(cc[1])
+			nice := string2Int64(cc[2])
+			system := string2Int64(cc[3])
+			idle := string2Int64(cc[4])
+			iowait := string2Int64(cc[5])
+			irq := string2Int64(cc[6])
+			softirq := string2Int64(cc[7])
 			total := sum(user, nice, system, idle, iowait, irq, softirq)
 
-			cpu = append(cpu, &Cpu{total, user, nice, system, idle, iowait, irq, softirq})
+			info = append(info, &CPUInfo{total, user, nice, system, idle, iowait, irq, softirq})
 		}
 	}
 

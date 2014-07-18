@@ -7,23 +7,26 @@ import (
 	"time"
 )
 
+// HostName host name and boot time struct.
 type HostName struct {
-	Name   string
-	Boot   time.Time
-	Uptime string
+	Name   string `json:"name"`
+	Boot   string `json:"boot"`
+	Uptime string `json:"uptime"`
 }
 
+// String format the host struct.
 func (h *HostName) String() (host string) {
 	if h == nil {
 		return
 	}
-	return fmt.Sprintf("user:%s, boot:%s, uptime:%s", h.Name, h.Boot.Format(gTimeFarmat), h.Uptime)
+
+	return fmt.Sprintf("user:%s, boot:%s, uptime:%s", h.Name, h.Boot, h.Uptime)
 }
 
-// 通过读取 /proc/uptime 获取系统运行信息
-func (xm *Xminfo) Host() (host *HostName, err error) {
+// Host getting host info by reading linux /proc/uptime file.
+func (x *Xminfo) Host() (host *HostName, err error) {
 	host = new(HostName)
-	b, err := ioutil.ReadFile(gHost)
+	b, err := ioutil.ReadFile(gHostFile)
 	if err != nil {
 		return
 	}
@@ -35,14 +38,16 @@ func (xm *Xminfo) Host() (host *HostName, err error) {
 		}
 	}
 	t := string(b) + "s"
-	// 获得系统运行的时间
+
+	// system running time.
 	d, err := time.ParseDuration(t)
 	if err != nil {
 		return
 	}
 	host.Uptime = d.String()
-	// 获得系统登录时间
-	host.Boot = time.Now().Add(-d)
+
+	// getting system booting time.
+	host.Boot = time.Now().Add(-d).Format(gTimeFarmat)
 
 	host.Name, err = os.Hostname()
 	if err != nil {

@@ -5,17 +5,22 @@ import (
 	"strconv"
 )
 
-// 格式化单位为 KB MB GB TB等格式
+// ByteSize type for the format of KB MB GB TB.
 type ByteSize float64
 
 const (
-	_           = iota
+	_ = iota
+	// KB size.
 	KB ByteSize = 1 << (10 * iota)
+	// MB size.
 	MB
+	// GB size.
 	GB
+	// TB size.
 	TB
 )
 
+// String format the size into the KB MB GB TB format.
 func (b ByteSize) String() (rs string) {
 	switch {
 	case b >= TB:
@@ -30,13 +35,16 @@ func (b ByteSize) String() (rs string) {
 	return fmt.Sprintf("%.2fB", b)
 }
 
-// string转换成int64类型
-func string2int64(src string) (rs int64) {
+func string2Int64(src string) (rs int64) {
 	rs, _ = strconv.ParseInt(src, 10, 64)
 	return
 }
 
-// 计算不定项 int64 的和
+func string2Float64(src string) (rs float64) {
+	rs, _ = strconv.ParseFloat(src, 64)
+	return
+}
+
 func sum(src ...int64) (rs int64) {
 	rs = 0
 	for _, v := range src {

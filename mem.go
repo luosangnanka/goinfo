@@ -6,57 +6,85 @@ import (
 	"strings"
 )
 
+// Mem is mem info struct.
 type Mem struct {
-	Total   int64
-	Used    int64
-	Free    int64
-	Buffers int64
-	Cached  int64
+	Total   ByteSize `json:"total"`
+	Used    ByteSize `json:"used"`
+	Free    ByteSize `json:"free"`
+	Buffers ByteSize `json:"buffers"`
+	Cached  ByteSize `json:"cached"`
 }
 
+// Swap is swap info struct.
 type Swap struct {
-	Total int64
-	Used  int64
-	Free  int64
+	Total ByteSize `json:"total"`
+	Used  ByteSize `json:"used"`
+	Free  ByteSize `json:"free"`
 }
 
+// Free is mem info sum.
 type Free struct {
-	Mem  *Mem
-	Swap *Swap
+	Mem  *Mem  `json:"mem"`
+	Swap *Swap `json:"swap"`
 }
 
-// 通过读取 /proc/meminfo 获得内存信息
-func (f *Free) String() (memory string) {
+// String format the Mem struct.
+func (m *Mem) String() (mem string) {
+	if m == nil {
+		return
+	}
+
+	return fmt.Sprintf("Mem:\t%s\t%s\t%s\t%s\t%s", m.Total.String(), m.Used.String(), m.Free.String(), m.Buffers.String(), m.Cached.String())
+}
+
+// String format the Swap struct.
+func (s *Swap) String() (swap string) {
+	if s == nil {
+		return
+	}
+
+	return fmt.Sprintf("Swap:\t%s\t%s\t%s", s.Total.String(), s.Used.String(), s.Free.String())
+}
+
+// String format the free struct.
+func (f *Free) String() (free string) {
 	if f == nil {
 		return
 	}
-	mem, swap := f.Mem, f.Swap
-	memory = fmt.Sprintf("Mem:\t%s\t%s\t%s\t%s\t%s\nSwap:\t%s\t%s\t%s",
-		ByteSize(mem.Total).String(), ByteSize(mem.Used).String(), ByteSize(mem.Free).String(), ByteSize(mem.Buffers).String(), ByteSize(mem.Cached).String(),
-		ByteSize(swap.Total).String(), ByteSize(swap.Used).String(), ByteSize(swap.Free).String())
 
-	return
+	return fmt.Sprintf("%s\n%s", f.Mem.String(), f.Swap.String())
 }
 
-func (xm *Xminfo) Memory() (free *Free, err error) {
+// Memory getting host memory by reading linux /proc/meminfo file.
+func (x *Xminfo) Memory() (free *Free, err error) {
 	free = new(Free)
-	b, err := ioutil.ReadFile(gMem)
+	b, err := ioutil.ReadFile(gMemFile)
 	if err != nil {
 		return
 	}
 	s := strings.SplitAfter(string(b), "\n")
-	m := make([]int64, 0)
+	var m = make([]ByteSize, 0)
+
 	for _, v := range s {
 		if v == "" {
 			continue
 		}
 		mm := strings.Split(v, ":")
+		if len(mm) < 2 {
+			err = fmt.Errorf("mem info fields has no enough fields")
+			return
+		}
 		info := strings.Replace(mm[1], "kB", "", -1)
 		info = strings.TrimSpace(info)
-		m = append(m, string2int64(info)*1024)
+		m = append(m, ByteSize(string2Float64(info)*1024))
+	}
+	if len(m) < 14 {
+		err = fmt.Errorf("mem info fields has no enough fields")
+		return
 	}
 	used := m[0] - m[1]
 	swapUsed := m[13] - m[14]
+
 	free.Mem = &Mem{Total: m[0], Used: used, Free: m[1], Buffers: m[2], Cached: m[3]}
 	free.Swap = &Swap{Total: m[13], Used: swapUsed, Free: m[14]}
 
