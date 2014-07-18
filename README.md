@@ -9,7 +9,9 @@ go get github.com/luosangnanka/goinfo
 
 ## Features
 * Fast, and little resource consumption.
+
 	Only because it works by reading linux file but not depand on any linux command such as 'free', etc.
+	
 * Good compatibility.
 	It works in any Linux machines.
 
